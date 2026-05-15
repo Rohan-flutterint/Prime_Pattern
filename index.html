@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prime Pattern Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">3D Prime Number Visualizer</p>
+          <h1>Map primes onto the XYZ graph and hunt for hidden structure.</h1>
+          <p class="lede">
+            This view starts with the same style of mapping as your reference:
+            prime numbers become coordinates, and the geometry reveals the
+            rhythm hiding inside apparent randomness.
+          </p>
+        </div>
+
+        <div class="formula-card">
+          <p id="formula-label" class="formula-label">Current mapping</p>
+          <p id="formula-line-1" class="formula-line">
+            <span>x = p sin(p) cos(p)</span>
+          </p>
+          <p id="formula-line-2" class="formula-line">
+            <span>y = p sin²(p)</span>
+          </p>
+          <p id="formula-line-3" class="formula-line">
+            <span>z = p cos(p)</span>
+          </p>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="controls-panel">
+          <div class="panel-block">
+            <h2>Controls</h2>
+
+            <label class="control">
+              <span>Pattern</span>
+              <select id="pattern-select">
+                <option value="wing" selected>Reference wing</option>
+                <option value="helix">Prime helix</option>
+                <option value="lattice">Wave lattice</option>
+              </select>
+            </label>
+
+            <label class="control">
+              <span>Prime count</span>
+              <input id="prime-count" type="range" min="200" max="12000" step="200" value="4000" />
+              <strong id="prime-count-value">4000</strong>
+            </label>
+
+            <label class="control">
+              <span>Point size</span>
+              <input id="point-size" type="range" min="2" max="10" step="1" value="4" />
+              <strong id="point-size-value">4</strong>
+            </label>
+
+            <label class="control">
+              <span>Scale</span>
+              <input id="scale" type="range" min="30" max="180" step="5" value="90" />
+              <strong id="scale-value">90</strong>
+            </label>
+
+            <label class="control">
+              <span>Color mode</span>
+              <select id="color-select">
+                <option value="index" selected>Prime order</option>
+                <option value="modulo">Prime modulo 12</option>
+                <option value="gap">Prime gap size</option>
+              </select>
+            </label>
+
+            <label class="toggle">
+              <input id="mirror-toggle" type="checkbox" checked />
+              <span>Mirror across X</span>
+            </label>
+
+            <label class="toggle">
+              <input id="rotate-toggle" type="checkbox" />
+              <span>Auto-rotate camera</span>
+            </label>
+          </div>
+
+          <div class="panel-block stats">
+            <h2>Dataset</h2>
+            <p><span>Largest prime:</span> <strong id="largest-prime">-</strong></p>
+            <p><span>Visible points:</span> <strong id="visible-points">-</strong></p>
+            <p><span>Current formula:</span> <strong id="active-formula">-</strong></p>
+          </div>
+        </aside>
+
+        <section class="plot-panel">
+          <div class="poster-overlay poster-header">
+            <p class="poster-kicker">Prime Pattern Study</p>
+            <h2>3D Embedding of Prime Numbers</h2>
+            <p class="poster-subtitle">
+              Exploratory mapping of primes through trigonometric coordinates
+            </p>
+          </div>
+
+          <div id="plot"></div>
+
+          <div class="poster-overlay poster-formula">
+            <p class="poster-label">Coordinate Mapping</p>
+            <p id="poster-formula-line-1" class="poster-formula-line">x = p sin(p) cos(p)</p>
+            <p id="poster-formula-line-2" class="poster-formula-line">y = p sin²(p)</p>
+            <p id="poster-formula-line-3" class="poster-formula-line">z = p cos(p)</p>
+          </div>
+
+          <div class="poster-overlay poster-meta">
+            <p id="poster-meta-primes">First 4,000 primes</p>
+            <p id="poster-meta-largest">Largest prime 37,813</p>
+          </div>
+
+          <div class="plot-caption">
+            Drag to orbit, scroll to zoom, and switch mappings to compare how the
+            same primes organize into different shapes.
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
