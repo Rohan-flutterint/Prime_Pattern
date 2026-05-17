@@ -1,4 +1,5 @@
-const plotEl = document.getElementById("plot");
+const plotPrimesEl = document.getElementById("plot-primes");
+const plotNaturalsEl = document.getElementById("plot-naturals");
 const urlParams = new URLSearchParams(window.location.search);
 const isPosterMode = urlParams.get("view") === "poster";
 
@@ -14,6 +15,7 @@ const elements = {
   mirrorToggle: document.getElementById("mirror-toggle"),
   rotateToggle: document.getElementById("rotate-toggle"),
   largestPrime: document.getElementById("largest-prime"),
+  largestNatural: document.getElementById("largest-natural"),
   visiblePoints: document.getElementById("visible-points"),
   activeFormula: document.getElementById("active-formula"),
   formulaLabel: document.getElementById("formula-label"),
@@ -28,15 +30,15 @@ const elements = {
 };
 
 const patternLabels = {
-  wing: "x = p sin(p) cos(p), y = p sin²(p), z = p cos(p)",
-  helix: "x = sqrt(p) cos(p), y = sqrt(p) sin(p), z = log(p) p / 3",
-  lattice: "x = p sin(p / 7), y = p cos(p / 11), z = p sin(p / 13)",
+  wing: "x = t sin(t) cos(t), y = t sin²(t), z = t cos(t)",
+  helix: "x = sqrt(t) cos(t), y = sqrt(t) sin(t), z = log(t) t / 3",
+  lattice: "x = t sin(t / 7), y = t cos(t / 11), z = t sin(t / 13)",
 };
 
 const patternFormulaLines = {
-  wing: ["x = p sin(p) cos(p)", "y = p sin²(p)", "z = p cos(p)"],
-  helix: ["x = sqrt(p) cos(p)", "y = sqrt(p) sin(p)", "z = log(p) p / 3"],
-  lattice: ["x = p sin(p / 7)", "y = p cos(p / 11)", "z = p sin(p / 13)"],
+  wing: ["x = t sin(t) cos(t)", "y = t sin²(t)", "z = t cos(t)"],
+  helix: ["x = sqrt(t) cos(t)", "y = sqrt(t) sin(t)", "z = log(t) t / 3"],
+  lattice: ["x = t sin(t / 7)", "y = t cos(t / 11)", "z = t sin(t / 13)"],
 };
 
 let animationFrameId = null;
@@ -77,41 +79,45 @@ function generateFirstNPrimes(count) {
   return primeCache.slice(0, count);
 }
 
-function mapPrimeToPoint(prime, mode, scale, largestPrime) {
-  const normalizedScale = scale / Math.max(largestPrime, 1);
+function generateFirstNNaturals(count) {
+  return Array.from({ length: count }, (_, index) => index + 1);
+}
+
+function mapValueToPoint(value, mode, scale, largestValue) {
+  const normalizedScale = scale / Math.max(largestValue, 1);
 
   if (mode === "helix") {
-    const radius = Math.sqrt(prime) * 1.8;
+    const radius = Math.sqrt(value) * 1.8;
     return {
-      x: radius * Math.cos(prime) * normalizedScale * 4,
-      y: radius * Math.sin(prime) * normalizedScale * 4,
-      z: Math.log(prime) * prime * normalizedScale * 0.9,
+      x: radius * Math.cos(value) * normalizedScale * 4,
+      y: radius * Math.sin(value) * normalizedScale * 4,
+      z: Math.log(value) * value * normalizedScale * 0.9,
     };
   }
 
   if (mode === "lattice") {
     return {
-      x: prime * Math.sin(prime / 7) * normalizedScale,
-      y: prime * Math.cos(prime / 11) * normalizedScale,
-      z: prime * Math.sin(prime / 13) * normalizedScale,
+      x: value * Math.sin(value / 7) * normalizedScale,
+      y: value * Math.cos(value / 11) * normalizedScale,
+      z: value * Math.sin(value / 13) * normalizedScale,
     };
   }
 
   return {
-    x: prime * Math.sin(prime) * Math.cos(prime) * normalizedScale,
-    y: prime * Math.sin(prime) * Math.sin(prime) * normalizedScale,
-    z: prime * Math.cos(prime) * normalizedScale,
+    x: value * Math.sin(value) * Math.cos(value) * normalizedScale,
+    y: value * Math.sin(value) * Math.sin(value) * normalizedScale,
+    z: value * Math.cos(value) * normalizedScale,
   };
 }
 
-function colorFromPrime(prime, index, previousPrime, mode, count) {
+function colorFromValue(value, index, previousValue, mode, count) {
   if (mode === "modulo") {
-    const hue = ((prime % 12) / 12) * 360;
+    const hue = ((value % 12) / 12) * 360;
     return `hsl(${hue} 95% 72%)`;
   }
 
   if (mode === "gap") {
-    const gap = previousPrime ? prime - previousPrime : 1;
+    const gap = previousValue ? value - previousValue : 1;
     const hue = Math.min(340, 200 + gap * 10);
     const lightness = Math.min(82, 58 + gap * 1.4);
     return `hsl(${hue} 90% ${lightness}%)`;
@@ -121,21 +127,21 @@ function colorFromPrime(prime, index, previousPrime, mode, count) {
   return `hsl(${hue} 94% 72%)`;
 }
 
-function buildTrace(primes, config, mirrored = false) {
+function buildTrace(values, config, datasetLabel, mirrored = false) {
   const x = [];
   const y = [];
   const z = [];
   const colors = [];
-  const largestPrime = primes[primes.length - 1];
+  const largestValue = values[values.length - 1];
 
-  for (let index = 0; index < primes.length; index += 1) {
-    const prime = primes[index];
-    const point = mapPrimeToPoint(prime, config.pattern, config.scale, largestPrime);
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+    const point = mapValueToPoint(value, config.pattern, config.scale, largestValue);
 
     x.push(mirrored ? -point.x : point.x);
     y.push(point.y);
     z.push(point.z);
-    colors.push(colorFromPrime(prime, index, primes[index - 1], config.colorMode, primes.length));
+    colors.push(colorFromValue(value, index, values[index - 1], config.colorMode, values.length));
   }
 
   return {
@@ -145,8 +151,8 @@ function buildTrace(primes, config, mirrored = false) {
     y,
     z,
     hovertemplate:
-      "Prime: %{customdata}<br>x: %{x:.3f}<br>y: %{y:.3f}<br>z: %{z:.3f}<extra></extra>",
-    customdata: primes,
+      `${datasetLabel}: %{customdata}<br>x: %{x:.3f}<br>y: %{y:.3f}<br>z: %{z:.3f}<extra></extra>`,
+    customdata: values,
     marker: {
       size: config.pointSize,
       color: colors,
@@ -155,7 +161,7 @@ function buildTrace(primes, config, mirrored = false) {
         width: 0,
       },
     },
-    name: mirrored ? "Mirrored primes" : "Primes",
+    name: mirrored ? `Mirrored ${datasetLabel}` : datasetLabel,
     showlegend: false,
   };
 }
@@ -187,7 +193,7 @@ function createAxisTrace(axis) {
 function getConfig() {
   return {
     pattern: elements.patternSelect.value,
-    primeCount: Number(elements.primeCount.value),
+    sampleCount: Number(elements.primeCount.value),
     pointSize: Number(elements.pointSize.value),
     scale: Number(elements.scale.value),
     colorMode: elements.colorSelect.value,
@@ -196,12 +202,13 @@ function getConfig() {
   };
 }
 
-function updateLabels(config, primes) {
-  elements.primeCountValue.textContent = String(config.primeCount);
+function updateLabels(config, primes, naturals) {
+  elements.primeCountValue.textContent = String(config.sampleCount);
   elements.pointSizeValue.textContent = String(config.pointSize);
   elements.scaleValue.textContent = String(config.scale);
   elements.largestPrime.textContent = primes[primes.length - 1].toLocaleString();
-  elements.visiblePoints.textContent = (config.mirror ? primes.length * 2 : primes.length).toLocaleString();
+  elements.largestNatural.textContent = naturals[naturals.length - 1].toLocaleString();
+  elements.visiblePoints.textContent = (config.mirror ? config.sampleCount * 2 : config.sampleCount).toLocaleString();
   elements.activeFormula.textContent = patternLabels[config.pattern];
   elements.formulaLabel.textContent =
     config.pattern === "wing" ? "Current mapping" : `${config.pattern} mapping`;
@@ -211,51 +218,64 @@ function updateLabels(config, primes) {
   elements.posterFormulaLine1.textContent = patternFormulaLines[config.pattern][0];
   elements.posterFormulaLine2.textContent = patternFormulaLines[config.pattern][1];
   elements.posterFormulaLine3.textContent = patternFormulaLines[config.pattern][2];
-  elements.posterMetaPrimes.textContent = `First ${config.primeCount.toLocaleString()} primes`;
+  elements.posterMetaPrimes.textContent = `First ${config.sampleCount.toLocaleString()} primes`;
   elements.posterMetaLargest.textContent = `Largest prime ${primes[primes.length - 1].toLocaleString()}`;
 }
 
-function renderPlot() {
-  const config = getConfig();
-  const primes = generateFirstNPrimes(config.primeCount);
-  updateLabels(config, primes);
-
+function buildDatasetTraces(values, config, datasetLabel) {
   const traces = [
-    buildTrace(primes, config, false),
+    buildTrace(values, config, datasetLabel, false),
     createAxisTrace("x"),
     createAxisTrace("y"),
     createAxisTrace("z"),
   ];
 
   if (config.mirror) {
-    traces.unshift(buildTrace(primes, config, true));
+    traces.unshift(buildTrace(values, config, datasetLabel, true));
   }
 
-  const layout = {
+  return traces;
+}
+
+function createLayout(posterMode = false) {
+  return {
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     margin: { l: 0, r: 0, t: 0, b: 0 },
     scene: {
       bgcolor: "rgba(0,0,0,0)",
       aspectmode: "cube",
-      domain: isPosterMode ? { x: [0.2, 1], y: [0, 1] } : undefined,
+      domain: posterMode ? { x: [0.2, 1], y: [0, 1] } : undefined,
       camera: {
-        eye: isPosterMode
-          ? { x: 1.52, y: 1.26, z: 0.92 }
-          : { x: 1.75, y: 1.15, z: 1.1 },
+        eye: posterMode ? { x: 1.52, y: 1.26, z: 0.92 } : { x: 1.75, y: 1.15, z: 1.1 },
       },
-      xaxis: axisStyle("x", isPosterMode),
-      yaxis: axisStyle("y", isPosterMode),
-      zaxis: axisStyle("z", isPosterMode),
+      xaxis: axisStyle("x", posterMode),
+      yaxis: axisStyle("y", posterMode),
+      zaxis: axisStyle("z", posterMode),
     },
   };
+}
 
-  Plotly.react(plotEl, traces, layout, {
+function renderPlotInto(element, values, config, datasetLabel, posterMode = false) {
+  Plotly.react(element, buildDatasetTraces(values, config, datasetLabel), createLayout(posterMode), {
     responsive: true,
     displaylogo: false,
-    displayModeBar: !isPosterMode,
+    displayModeBar: !posterMode,
     modeBarButtonsToRemove: ["lasso3d", "select2d"],
   });
+}
+
+function renderPlots() {
+  const config = getConfig();
+  const primes = generateFirstNPrimes(config.sampleCount);
+  const naturals = generateFirstNNaturals(config.sampleCount);
+
+  updateLabels(config, primes, naturals);
+  renderPlotInto(plotPrimesEl, primes, config, "Prime", isPosterMode);
+
+  if (!isPosterMode && plotNaturalsEl) {
+    renderPlotInto(plotNaturalsEl, naturals, config, "Natural", false);
+  }
 
   syncRotation(config.rotate);
 }
@@ -284,13 +304,17 @@ function syncRotation(shouldRotate) {
 
   const rotate = () => {
     currentAngle += 0.0035;
-    Plotly.relayout(plotEl, {
-      "scene.camera.eye": {
-        x: Math.cos(currentAngle) * 1.9,
-        y: Math.sin(currentAngle) * 1.9,
-        z: 1.05 + Math.sin(currentAngle * 0.6) * 0.15,
-      },
-    });
+    const eye = {
+      x: Math.cos(currentAngle) * 1.9,
+      y: Math.sin(currentAngle) * 1.9,
+      z: 1.05 + Math.sin(currentAngle * 0.6) * 0.15,
+    };
+
+    Plotly.relayout(plotPrimesEl, { "scene.camera.eye": eye });
+    if (!isPosterMode && plotNaturalsEl) {
+      Plotly.relayout(plotNaturalsEl, { "scene.camera.eye": eye });
+    }
+
     animationFrameId = requestAnimationFrame(rotate);
   };
 
@@ -306,21 +330,26 @@ function bindControls() {
     elements.colorSelect,
     elements.mirrorToggle,
   ].forEach((control) => {
-    control.addEventListener("input", renderPlot);
-    control.addEventListener("change", renderPlot);
+    control.addEventListener("input", renderPlots);
+    control.addEventListener("change", renderPlots);
   });
 
   elements.rotateToggle.addEventListener("change", () => {
     syncRotation(elements.rotateToggle.checked);
   });
 
-  window.addEventListener("resize", () => Plotly.Plots.resize(plotEl));
+  window.addEventListener("resize", () => {
+    Plotly.Plots.resize(plotPrimesEl);
+    if (!isPosterMode && plotNaturalsEl) {
+      Plotly.Plots.resize(plotNaturalsEl);
+    }
+  });
 }
 
 function initialize() {
   document.body.classList.toggle("poster-mode", isPosterMode);
   bindControls();
-  renderPlot();
+  renderPlots();
 }
 
 window.addEventListener("DOMContentLoaded", initialize);
