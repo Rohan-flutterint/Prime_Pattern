@@ -21,4 +21,5 @@ z = p cos(p)
 - Lets you change prime count, scale, point size, color mode, and symmetry
 - Includes extra formulas so you can compare different geometric patterns
 
-<img width="1503" height="769" alt="Screenshot 2026-05-15 at 10 08 38 PM" src="https://github.com/user-attachments/assets/fcd4db3a-ce5c-4601-9e75-f1a6dace0482" />
+<img width="1498" height="717" alt="Screenshot 2026-05-17 at 5 24 39 PM" src="https://github.com/user-attachments/assets/c9cd734d-af6e-483c-97b6-8c0da7e5f15e" />
+
